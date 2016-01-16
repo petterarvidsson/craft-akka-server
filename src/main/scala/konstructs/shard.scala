@@ -299,6 +299,11 @@ class ShardActor(db: ActorRef, shard: ShardPosition, val binaryStorage: ActorRef
       readChunk(p) { w =>
         s ! BlockViewed(p, w.toInt, initiator)
       }
+    case CheckBlock(p, w, t, initiator, universe) =>
+      val s = sender
+      readChunk(p) { w =>
+        s ! BlockChecked(p, w.toInt, t, initiator, universe)
+      }
     case RemoveBlock(p, initiator) =>
       val s = sender
       updateChunk(initiator, p) { w =>

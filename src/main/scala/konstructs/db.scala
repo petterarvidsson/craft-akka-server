@@ -4,8 +4,7 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable
 import akka.actor.{ Actor, ActorRef, Props }
 
-import konstructs.api.{ Position, BlockFactory, BoxQuery, BoxData, BlockTypeId,
-                        BoxQueryRawResult, BoxQueryResult, ReplaceBlocks }
+import konstructs.api._
 
 object Db {
   val ChunkSize = 32
@@ -59,6 +58,8 @@ class DbActor(universe: ActorRef, generator: ActorRef, binaryStorage: ActorRef,
       getShardActor(r.pos) forward r
     case v: DbActor.ViewBlock =>
       getShardActor(v.pos) forward v
+    case v: DbActor.CheckBlock =>
+      getShardActor(v.pos) forward v
     case s: SendBlocks =>
       getShardActor(s.chunk) forward s
     case q: BoxQuery =>
@@ -85,8 +86,9 @@ object DbActor {
   case class RemoveBlock(pos: Position, initiator: ActorRef)
   case class BlockRemoved(pos: Position, w: Int, initiator: ActorRef)
   case class ViewBlock(pos: Position, initiator: ActorRef)
+  case class CheckBlock(pos: Position, w: Int, t: Block, initiator: ActorRef, universe: ActorRef)
   case class BlockViewed(pos: Position, w: Int, intitator: ActorRef)
-
+  case class BlockChecked(pos: Position, w: Int, t: Block, initiator: ActorRef, universe: ActorRef)
   def splitList[T](placed: java.util.Map[Position, T]):
       Map[ChunkPosition, Map[Position, T]] = {
     val shards = mutable.HashMap[ChunkPosition, mutable.Map[Position, T]]()

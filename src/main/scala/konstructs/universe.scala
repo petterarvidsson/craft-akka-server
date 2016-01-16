@@ -113,6 +113,8 @@ class UniverseActor(
     case RemoveBlock(pos) =>
       db.tell(DbActor.RemoveBlock(pos, sender), blockManager)
       blockUpdateEvents.foreach(e => e ! EventBlockRemoved(pos))
+    case ReplaceBlockIf(pos, block, target) =>
+      blockManager ! BlockMetaActor.ReplaceBlockIfTo(pos, block, target, db, sender, self)
     case ViewBlock(pos) =>
       db.tell(DbActor.ViewBlock(pos, sender), blockManager)
     case r: ReplaceBlocks =>

@@ -100,10 +100,20 @@ class BlockMetaActor(
   }
 
   def ready: Receive = {
+    case ReplaceBlockTo(pos, block, db) =>
+      db ! DbActor.ReplaceBlock(pos, store(pos, block), sender)
+    case ReplaceBlockIfTo(pos, block, target, db, initiator, universe) =>
+      db ! DbActor.CheckBlock(pos, store(pos, block), target, initiator, universe)
     case PutBlockTo(pos, block, db) =>
       db ! DbActor.PutBlock(pos, store(pos, block), sender)
     case DbActor.BlockViewed(pos, w, initiator) =>
       initiator ! BlockViewed(pos, load(pos, w))
+    case DbActor.BlockChecked(pos, w, t, initiator, universe) =>
+      if (factory.w(t) == w) {
+        universe ! ReplaceBlock(pos, t)
+      } else {
+        initiator ! ReplaceBlockFailed(pos, t)
+      }
     case DbActor.BlockRemoved(pos, w, initiator) =>
       initiator ! BlockRemoved(pos, load(pos, w, true))
     case DbActor.UnableToPut(pos, w, initiator) =>
@@ -125,6 +135,8 @@ object BlockMetaActor {
   case object StoreData
 
   case class PutBlockTo(pos: Position, block: Block, db: ActorRef)
+  case class ReplaceBlockTo(pos: Position, block: Block, db: ActorRef)
+  case class ReplaceBlockIfTo(pos: Position, block: Block, target: Block, db: ActorRef, initiator: ActorRef, universe: ActorRef)
 
   def textureFilename(idString: String): String =
     s"/textures/$idString.png"

@@ -483,6 +483,8 @@ case class InteractTertiaryFilter(chain: Seq[ActorRef], message: InteractTertiar
 case class PutBlock(pos: Position, block: Block)
 case class UnableToPut(pos: Position, block: Block)
 case class ReplaceBlocks(filter: BlockFilter, blocks: java.util.Map[Position, BlockTypeId])
+case class ReplaceBlockIf(pos: Position, block: Block, target: Block)
+case class ReplaceBlockFailed(pos: Position, block: Block)
 case class RemoveBlock(pos: Position)
 case class DiscardBlock(pos: Position)
 case class BlockRemoved(pos: Position, block: Block)
