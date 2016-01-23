@@ -86,9 +86,9 @@ object DbActor {
   case class RemoveBlock(pos: Position, initiator: ActorRef)
   case class BlockRemoved(pos: Position, w: Int, initiator: ActorRef)
   case class ViewBlock(pos: Position, initiator: ActorRef)
-  case class CheckBlock(pos: Position, w: Int, t: Block, initiator: ActorRef, universe: ActorRef)
+  case class CheckBlock(pos: Position, w: Int, s: Block, t: Block, initiator: ActorRef, universe: ActorRef)
   case class BlockViewed(pos: Position, w: Int, intitator: ActorRef)
-  case class BlockChecked(pos: Position, w: Int, t: Block, initiator: ActorRef, universe: ActorRef)
+  case class BlockChecked(pos: Position, w: Int, s: Block, t: Block, initiator: ActorRef, universe: ActorRef)
   def splitList[T](placed: java.util.Map[Position, T]):
       Map[ChunkPosition, Map[Position, T]] = {
     val shards = mutable.HashMap[ChunkPosition, mutable.Map[Position, T]]()

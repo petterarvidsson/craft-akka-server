@@ -103,16 +103,16 @@ class BlockMetaActor(
     case ReplaceBlockTo(pos, block, db) =>
       db ! DbActor.ReplaceBlock(pos, store(pos, block), sender)
     case ReplaceBlockIfTo(pos, block, target, db, initiator, universe) =>
-      db ! DbActor.CheckBlock(pos, store(pos, block), target, initiator, universe)
+      db ! DbActor.CheckBlock(pos, store(pos, block), block, target, initiator, universe)
     case PutBlockTo(pos, block, db) =>
       db ! DbActor.PutBlock(pos, store(pos, block), sender)
     case DbActor.BlockViewed(pos, w, initiator) =>
       initiator ! BlockViewed(pos, load(pos, w))
-    case DbActor.BlockChecked(pos, w, t, initiator, universe) =>
+    case DbActor.BlockChecked(pos, w, s, t, initiator, universe) =>
       if (factory.w(t) == w) {
-        universe ! ReplaceBlock(pos, t)
+        universe ! ReplaceBlock(pos, s)
       } else {
-        initiator ! ReplaceBlockFailed(pos, t)
+        initiator ! ReplaceBlockFailed(pos, s)
       }
     case DbActor.BlockRemoved(pos, w, initiator) =>
       initiator ! BlockRemoved(pos, load(pos, w, true))
