@@ -20,7 +20,9 @@ object BlockType {
   val ShapePlant = "plant"
 }
 
-case class BlockTypeId(namespace: String, name: String)
+case class BlockTypeId(namespace: String, name: String) {
+  def fullName() : String = s"$namespace/$name"
+}
 
 object BlockTypeId {
   val Vacuum = BlockTypeId("org/konstructs", "vacuum")
