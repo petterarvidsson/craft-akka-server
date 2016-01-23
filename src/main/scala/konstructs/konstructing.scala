@@ -19,6 +19,8 @@ class KonstructingActor(konstructs: Set[Konstruct], konstructedFilters: Seq[Acto
 
   def receive = {
     case MatchPattern(pattern: Pattern) =>
+      println(pattern)
+      println(konstructs)
       bestMatch(pattern).map { k =>
         sender ! PatternMatched(k.result)
       }

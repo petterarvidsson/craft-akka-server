@@ -24,8 +24,7 @@ class BlockMetaActor(
                       val ns: String,
                       val jsonStorage: ActorRef,
                       configuredBlocks: Seq[(BlockTypeId, BlockType)],
-                      textures: Array[Byte],
-                      blockUpdateEvents: Seq[ActorRef]
+                      textures: Array[Byte]
                     ) extends Actor with Stash with utils.Scheduled with JsonStorage {
 
   import KonstructsJsonProtocol._
@@ -101,19 +100,20 @@ class BlockMetaActor(
   }
 
   def ready: Receive = {
-    case ViewBlockTo(pos, db) =>
-      db ! DbActor.ViewBlock(pos, sender)
     case ReplaceBlockTo(pos, block, db) =>
       db ! DbActor.ReplaceBlock(pos, store(pos, block), sender)
-      blockUpdateEvents.foreach(e => e ! EventBlockUpdated(pos, block))
+    case ReplaceBlockIfTo(pos, block, target, db, initiator, universe) =>
+      db ! DbActor.CheckBlock(pos, store(pos, block), block, target, initiator, universe)
     case PutBlockTo(pos, block, db) =>
       db ! DbActor.PutBlock(pos, store(pos, block), sender)
-      blockUpdateEvents.foreach(e => e ! EventBlockUpdated(pos, block))
-    case RemoveBlockTo(pos, db) =>
-      db ! DbActor.RemoveBlock(pos, sender)
-      blockUpdateEvents.foreach(e => e ! EventBlockRemoved(pos))
     case DbActor.BlockViewed(pos, w, initiator) =>
       initiator ! BlockViewed(pos, load(pos, w))
+    case DbActor.BlockChecked(pos, w, s, t, initiator, universe) =>
+      if (factory.w(t) == w) {
+        universe ! ReplaceBlock(pos, s)
+      } else {
+        initiator ! ReplaceBlockFailed(pos, s)
+      }
     case DbActor.BlockRemoved(pos, w, initiator) =>
       initiator ! BlockRemoved(pos, load(pos, w, true))
     case DbActor.UnableToPut(pos, w, initiator) =>
@@ -136,8 +136,7 @@ object BlockMetaActor {
 
   case class PutBlockTo(pos: Position, block: Block, db: ActorRef)
   case class ReplaceBlockTo(pos: Position, block: Block, db: ActorRef)
-  case class RemoveBlockTo(pos: Position, db: ActorRef)
-  case class ViewBlockTo(pos: Position, db: ActorRef)
+  case class ReplaceBlockIfTo(pos: Position, block: Block, target: Block, db: ActorRef, initiator: ActorRef, universe: ActorRef)
 
   def textureFilename(idString: String): String =
     s"/textures/$idString.png"
@@ -227,14 +226,7 @@ object BlockMetaActor {
   def props(
              name: String, universe: ActorRef,
              @Config(key = "json-storage") jsonStorage: ActorRef,
-             @Config(key = "blocks") blockConfig: TypesafeConfig,
-
-             @ListConfig(
-               key = "block-update-events",
-               elementType = classOf[ActorRef],
-               optional = true
-             ) blockUpdateEvents: Seq[ActorRef]
-
+             @Config(key = "blocks") blockConfig: TypesafeConfig
            ): Props = {
     print("Loading block data... ")
     val (blocks, textures) = parseBlocks(blockConfig)
@@ -244,8 +236,7 @@ object BlockMetaActor {
       name,
       jsonStorage,
       blocks,
-      textures,
-      nullAsEmpty(blockUpdateEvents)
+      textures
     )
   }
 }
