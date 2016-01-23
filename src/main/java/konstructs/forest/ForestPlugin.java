@@ -9,7 +9,7 @@ import konstructs.api.Position;
 public class ForestPlugin extends KonstructsActor {
     public ForestPlugin(String name, ActorRef universe) {
         super(universe);
-        getContext().actorOf(Forest.props(universe, new Position(-532, 25, -560)));
+        getContext().actorOf(Forest.props(universe, new Position(-742, 25, -676)));
     }
 
     @PluginConstructor

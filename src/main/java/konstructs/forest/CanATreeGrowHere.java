@@ -1,5 +1,7 @@
 package konstructs.forest;
 
+import java.util.Map;
+
 import akka.actor.ActorRef;
 import akka.actor.Props;
 
@@ -55,8 +57,9 @@ class CanATreeGrowHere extends KonstructsActor {
 
     @Override
     public void onBoxQueryResult(BoxQueryResult result) {
-        for(Placed<BlockTypeId> p: result.result().toPlaced()) {
-            if(!(p.block().equals(Forest.VACUUM_ID) || p.block().equals(Forest.LEAVES_ID))) {
+        for(Map.Entry<Position, BlockTypeId> p: result.result().toPlaced().entrySet()) {
+            if(!(p.getValue().equals(Forest.VACUUM_ID) ||
+                 p.getValue().equals(Forest.LEAVES_ID))) {
                 canNotGrow();
                 return;
             }

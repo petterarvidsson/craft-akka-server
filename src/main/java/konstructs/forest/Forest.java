@@ -1,5 +1,7 @@
 package konstructs.forest;
 
+import java.util.Map;
+
 import akka.actor.ActorRef;
 import akka.actor.Props;
 
@@ -15,7 +17,7 @@ class Forest extends KonstructsActor {
     static final Block SAPLING = Block.create(SAPLING_ID);
 
     static final int SEED_HEIGHT_DIFFERANCE = 5;
-    static final int MAX_SEED_HEIGHT = 32;
+    static final int MAX_SEED_HEIGHT = 48;
     static final int MIN_SEED_HEIGHT = 5;
 
     public Forest(ActorRef universe, Position start) {
@@ -27,11 +29,11 @@ class Forest extends KonstructsActor {
     void tryToSeed(Position pos) {
         Position start =
             new Position(pos.x(),
-                         Math.min(pos.y() - SEED_HEIGHT_DIFFERANCE, MIN_SEED_HEIGHT),
+                         Math.max(pos.y() - SEED_HEIGHT_DIFFERANCE, MIN_SEED_HEIGHT),
                          pos.z());
         Position end =
             new Position(pos.x() + 1,
-                         Math.max(pos.y() + SEED_HEIGHT_DIFFERANCE, MAX_SEED_HEIGHT),
+                         Math.min(pos.y() + SEED_HEIGHT_DIFFERANCE, MAX_SEED_HEIGHT),
                          pos.z() + 1);
         boxQuery(start, end);
     }
@@ -49,9 +51,9 @@ class Forest extends KonstructsActor {
 
     @Override
     public void onBoxQueryResult(BoxQueryResult result) {
-        for(Placed<BlockTypeId> p: result.result().toPlaced()) {
-            if(p.block().equals(DIRT_GRASS_ID)) {
-                Position pos = p.position();
+        for(Map.Entry<Position, BlockTypeId> p: result.result().toPlaced().entrySet()) {
+            if(p.getValue().equals(DIRT_GRASS_ID)) {
+                Position pos = p.getKey();
                 seed(new Position(pos.x(), pos.y() + 1, pos.z()));
                 return;
             }

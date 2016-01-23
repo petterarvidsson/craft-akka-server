@@ -22,9 +22,19 @@ class Tree extends KonstructsActor {
     private static final LSystem SYSTEM = getLSystem();
     private static final BlockMachine MACHINE = getBlockMachine();
     private static final String INITIAL_STATE = "a[&[c][-c][--c][+c]]c";
-    private static final int INITIAL_DELAY = 10;
-    private static final int RANDOM_DELAY = 10;
+    private static final int INITIAL_DELAY = 1;
+    private static final int RANDOM_DELAY = 1;
     private static final int MAX_SEEDS = 5;
+    private static final BlockFilter FOREST_BLOCKS = BlockFilterFactory
+        .withNamespace("org/konstructs/forest")
+        .or(BlockFilterFactory.vacuum())
+        .or(BlockFilterFactory
+            .withNamespace("org/konstructs")
+            .withName("wood"))
+        .or(BlockFilterFactory
+            .withNamespace("org/konstructs")
+            .withName("leaves"));
+
     private final Random r = new Random();
     private final int maxGenerations;
     private Position position;
@@ -63,9 +73,11 @@ class Tree extends KonstructsActor {
     }
 
     private void grow(int generation) {
-        discardBlocks(MACHINE.interpretJava(state, position));
+        Map<Position, BlockTypeId> removeOldBlocks =
+            BlockMachine.vacuumMachine().interpretJava(state, position);
         state = SYSTEM.iterate(state);
-        putBlocks(MACHINE.interpretJava(state, position));
+        removeOldBlocks.putAll(MACHINE.interpretJava(state, position));
+        replaceBlocks(removeOldBlocks, FOREST_BLOCKS);
         scheduleGrowth(generation + 1);
     }
 
@@ -73,7 +85,6 @@ class Tree extends KonstructsActor {
 
         if(block.block().type().equals(Forest.SAPLING_ID)) {
             System.out.println("Sapling found!");
-            discardBlock(position);
             scheduleGrowth(0);
         } else {
             System.out.println("No sapling!");
